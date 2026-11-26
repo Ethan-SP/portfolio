@@ -283,10 +283,14 @@ html { scroll-padding-block: calc(64px + var(--safe-top)) calc(96px + var(--safe
 }
 :focus-visible, .project-row:focus-visible { outline-color: var(--portfolio-accent); }
 .dock-app.is-open::after { background: var(--portfolio-accent); }
-.desktop-welcome h1 .typed-wrap,
-.desktop-welcome h1 .cursor {
-  color: color-mix(in srgb, var(--portfolio-accent) 68%, #f4f4f5);
+.desktop-welcome h1 #typed-word,
+.desktop-welcome h1 .cursor,
+.menu-left button[aria-expanded="true"] .menu-chevron,
+.project-row:hover .row-chevron,
+.project-row:focus-visible .row-chevron {
+  color: var(--portfolio-accent);
 }
+.status-dot { background: var(--portfolio-accent); }
 .appearance-panel {
   width: min(408px, calc(100% - 32px));
   padding: 0;
