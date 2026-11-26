@@ -401,3 +401,15 @@ html { scrollbar-gutter: stable; }
 html.workspace-scroll-locked,
 html.workspace-scroll-locked body { overflow: hidden; }
 .app-window.maximized .window-content { overscroll-behavior: contain; }
+
+/* A maximized window shares the viewport with the system menu bar. */
+.workspace-scroll-locked .desktop {
+  padding-top: calc(48px + var(--safe-top));
+}
+.workspace-scroll-locked .menubar.liquidGlass {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 100;
+  background: #23252a;
+}
+.workspace-scroll-locked .menubar.liquidGlass::before { display: none; }
