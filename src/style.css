@@ -360,3 +360,39 @@ html { scroll-padding-block: calc(64px + var(--safe-top)) calc(96px + var(--safe
 @media (max-width: 900px) {
   .traffic-lights .maximize-window { display: none; }
 }
+
+.workspace-divider {
+  margin: 24px 0 0;
+  border: 0;
+  border-top: 1px solid #3e4046;
+}
+.menubar.liquidGlass, .dock.liquidGlass, .dock.liquidGlass.is-scrolled {
+  border-color: transparent;
+  box-shadow: 0 8px 24px #0004;
+}
+.menubar.liquidGlass { box-shadow: none; }
+.menubar.liquidGlass::before, .dock.liquidGlass::before { filter: none; }
+.menubar.liquidGlass::after, .dock.liquidGlass::after { display: none; }
+.dock.liquidGlass.auto-hidden:not(.edge-revealed):not(:focus-within) {
+  transform: translate(-50%, calc(100% + 24px + var(--safe-bottom)));
+}
+.dock-edge {
+  position: fixed;
+  z-index: 89;
+  inset: auto 0 0;
+  width: 100%;
+  height: calc(12px + var(--safe-bottom));
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.dock-edge:focus-visible { background: #ffffff24; }
+.window-area:has(.app-window.maximized) { perspective: none; }
+.app-window.maximized {
+  inset: calc(49px + var(--safe-top)) var(--safe-right) var(--safe-bottom) var(--safe-left) !important;
+  transform: none;
+}
+@media (max-width: 900px) {
+  .traffic-lights .maximize-window { display: grid; }
+  .app-window.maximized { position: fixed !important; }
+}

@@ -32,13 +32,68 @@ photos.forEach(photo=>{
 
 function focusWindow(win){topZ+=1;win.style.zIndex=String(topZ);document.querySelectorAll('.app-window').forEach(item=>item.classList.toggle('window-active',item===win))}
 function openWindow(name){const win=document.querySelector(`[data-window="${name}"]`);if(!win)return;win.hidden=false;win.classList.remove('minimized');win.style.display='';focusWindow(win);if(stacked.matches)win.scrollIntoView({block:'start'});}
-function closeWindow(win){win.hidden=true;document.querySelector(`.dock-app[data-open="${win.dataset.window}"]`)?.classList.remove('is-open')}
+function closeWindow(win){win.hidden=true;restoreWindow(win.querySelector('.maximize-window'));syncDock();document.querySelector(`.dock-app[data-open="${win.dataset.window}"]`)?.classList.remove('is-open')}
 function showProject(index){const p=projects[index];if(!p)return;detailWindow.hidden=false;detailWindow.style.display='';detailWindow.classList.remove('minimized');detailContent.innerHTML=`<img class="detail-image" decoding="async" ${imageSources(p.image, '(max-width: 900px) 95vw, 520px')} src="${safe(p.image)}" alt="${safe(p.alt)}"><div class="detail-body"><p class="profile-label">${safe(p.type)} · ${safe(p.year)}</p><h3>${safe(p.title)}</h3><p>${safe(p.description)}</p>${p.url?`<a class="mail-button" href="${safe(p.url)}" target="_blank" rel="noopener noreferrer">View project <span>↗</span></a>`:''}</div>`;openWindow('detail')}
 
 projectList.addEventListener('click',event=>{const row=event.target.closest('[data-project]');if(row)showProject(Number(row.dataset.project))});
 document.querySelectorAll('.dock-app[data-open]').forEach(button=>button.addEventListener('click',()=>{const name=button.dataset.open;const win=document.querySelector(`[data-window="${name}"]`);if(win&&!win.hidden&&win.classList.contains('minimized')){win.classList.remove('minimized');win.style.display='';focusWindow(win);return}openWindow(name);button.classList.add('is-open')}));
 document.querySelectorAll('.close-window').forEach(button=>button.addEventListener('click',()=>closeWindow(button.closest('.app-window'))));
-document.querySelectorAll('.minimize-window').forEach(button=>button.addEventListener('click',()=>{const win=button.closest('.app-window');win.classList.add('minimized');setTimeout(()=>{if(win.classList.contains('minimized'))win.style.display='none'},220)}));
+const launcher = document.querySelector('.dock');
+const dockEdge = document.querySelector('.dock-edge');
+
+function syncDock() {
+  const expanded = document.querySelector('.app-window.maximized:not([hidden])');
+  launcher.classList.toggle('auto-hidden', Boolean(expanded));
+  launcher.classList.remove('edge-revealed');
+  dockEdge.hidden = !expanded;
+}
+function revealDock() {
+  launcher.classList.add('edge-revealed');
+}
+dockEdge.addEventListener('pointerenter', revealDock);
+dockEdge.addEventListener('click', revealDock);
+document.addEventListener('pointermove', event => {
+  if (event.pointerType !== 'mouse' || !launcher.classList.contains('auto-hidden')) return;
+  if (event.clientY >= innerHeight - 12 || launcher.contains(event.target)) revealDock();
+  else if (event.clientY < innerHeight - 100) launcher.classList.remove('edge-revealed');
+}, { passive: true });
+document.addEventListener('pointerdown', event => {
+  if (!launcher.contains(event.target) && !dockEdge.contains(event.target)) {
+    launcher.classList.remove('edge-revealed');
+  }
+});
+
+for (const button of document.querySelectorAll('.minimize-window')) {
+  button.addEventListener('click', async () => {
+    const win = button.closest('.app-window');
+    if (win.dataset.minimizing) return;
+    win.dataset.minimizing = 'true';
+    const name = win.dataset.window === 'detail' ? 'projects' : win.dataset.window;
+    const appButton = launcher.querySelector(`[data-open="${name}"]`);
+    if (appButton && !reducedMotion.matches && win.animate) {
+      const from = win.getBoundingClientRect();
+      const icon = appButton.querySelector('.dock-icon').getBoundingClientRect();
+      const base = launcher.getBoundingClientRect();
+      const dockOffset = launcher.classList.contains('auto-hidden') &&
+        !launcher.classList.contains('edge-revealed')
+        ? base.bottom - (innerHeight - parseFloat(getComputedStyle(launcher).bottom))
+        : 0;
+      const x = icon.left + icon.width / 2 - from.left;
+      const y = icon.top + icon.height / 2 - dockOffset - from.top;
+      const animation = win.animate([
+        { transformOrigin: 'top left', transform: 'none', opacity: 1 },
+        { transformOrigin: 'top left', transform: `translate(${x}px, ${y}px) scale(.04)`, opacity: 0 },
+      ], { duration: 360, easing: 'cubic-bezier(.35,.02,.6,1)' });
+      await animation.finished.catch(() => {});
+    }
+    delete win.dataset.minimizing;
+    restoreWindow(win.querySelector('.maximize-window'));
+    win.classList.add('minimized');
+    win.style.display = 'none';
+    syncDock();
+    appButton?.focus({ preventScroll: true });
+  });
+}
 const maximizeButtons = document.querySelectorAll('.maximize-window');
 function restoreWindow(button) {
   button.closest('.app-window').classList.remove('maximized');
@@ -47,7 +102,6 @@ function restoreWindow(button) {
 for (const button of maximizeButtons) {
   restoreWindow(button);
   button.addEventListener('click', () => {
-    if (stacked.matches) return;
     const win = button.closest('.app-window');
     const wasExpanded = win.classList.contains('maximized');
     maximizeButtons.forEach(restoreWindow);
@@ -56,13 +110,16 @@ for (const button of maximizeButtons) {
       button.setAttribute('aria-label', 'Restore window size');
     }
     focusWindow(win);
+    syncDock();
   });
 }
-stacked.addEventListener('change', () => maximizeButtons.forEach(restoreWindow));
+stacked.addEventListener('change', () => { maximizeButtons.forEach(restoreWindow); syncDock(); });
+syncDock();
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && !document.querySelector('dialog[open]') &&
       document.querySelector('#menubar-dropdown').hidden) {
     maximizeButtons.forEach(restoreWindow);
+    syncDock();
   }
 });
 document.querySelectorAll('.app-window').forEach(win=>win.addEventListener('pointerdown',()=>focusWindow(win)));
