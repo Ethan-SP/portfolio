@@ -396,3 +396,8 @@ html { scroll-padding-block: calc(64px + var(--safe-top)) calc(96px + var(--safe
   .traffic-lights .maximize-window { display: grid; }
   .app-window.maximized { position: fixed !important; }
 }
+
+html { scrollbar-gutter: stable; }
+html.workspace-scroll-locked,
+html.workspace-scroll-locked body { overflow: hidden; }
+.app-window.maximized .window-content { overscroll-behavior: contain; }

@@ -43,6 +43,7 @@ const dockEdge = document.querySelector('.dock-edge');
 
 function syncDock() {
   const expanded = document.querySelector('.app-window.maximized:not([hidden])');
+  document.documentElement.classList.toggle('workspace-scroll-locked', Boolean(expanded));
   launcher.classList.toggle('auto-hidden', Boolean(expanded));
   launcher.classList.remove('edge-revealed');
   dockEdge.hidden = !expanded;
