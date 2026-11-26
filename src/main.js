@@ -61,6 +61,31 @@ document.querySelectorAll('.menu-name,.menu-left [data-menu]').forEach(button=>b
 document.querySelector('#menubar-dropdown').addEventListener('click',event=>{const action=event.target.closest('[data-menu-action]')?.dataset.menuAction;if(!action)return;if(action==='all')document.querySelectorAll('.app-window').forEach(win=>{win.hidden=false;win.style.display='';win.classList.remove('minimized')});else if(action==='close')document.querySelectorAll('.app-window').forEach(closeWindow);else if(action!=='noop')openWindow(action);document.querySelector('#menubar-dropdown').hidden=true});
 document.addEventListener('click',event=>{if(!event.target.closest('.menubar'))document.querySelector('#menubar-dropdown').hidden=true});
 
-const words=['circuits','code','curiosity','ideas'];const target=document.querySelector('#typed-word');let wordIndex=0;
-if(!matchMedia('(prefers-reduced-motion: reduce)').matches)setInterval(()=>{target.classList.add('changing');setTimeout(()=>{wordIndex=(wordIndex+1)%words.length;target.textContent=words[wordIndex];target.classList.remove('changing')},220)},3400);else document.querySelector('.cursor')?.remove();
+const words=['circuits','code','curiosity','ideas'];
+const target=document.querySelector('#typed-word');let wordIndex=0;
+if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+  setInterval(()=>{
+    target.classList.add('changing');
+    window.setTimeout(()=>{wordIndex=(wordIndex+1)%words.length;target.textContent=words[wordIndex];target.classList.remove('changing')},280);
+  },3200);
+}
 function updateClock(){const now=new Date();document.querySelector('#menu-clock').textContent=new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit'}).format(now)}updateClock();setInterval(updateClock,30000);
+
+// Reveal the desktop windows as scroll brings them into view; subtle scene depth on larger screens.
+const windowObserver=new IntersectionObserver(entries=>{
+  for(const entry of entries){
+    if(entry.isIntersecting)entry.target.classList.add('in-view');
+    else if(entry.boundingClientRect.top>innerHeight)entry.target.classList.remove('in-view');
+  }
+},{threshold:.08,rootMargin:'0px 0px -5% 0px'});
+document.querySelectorAll('.app-window').forEach((win,index)=>{win.classList.add('window-reveal');win.style.setProperty('--enter-delay',`${index*90}ms`);windowObserver.observe(win)});
+const dock=document.querySelector('.dock');
+let scrollFrame=0;
+function updateScene(){
+  scrollFrame=0;
+  const y=window.scrollY;
+  document.querySelector('.desktop')?.style.setProperty('--scene-shift',`${Math.min(y*.04,28)}px`);
+  if(innerWidth>700){document.querySelectorAll('.app-window').forEach((win,index)=>{const rect=win.getBoundingClientRect();if(rect.bottom>0&&rect.top<innerHeight){const center=rect.top+rect.height/2-innerHeight/2;win.style.setProperty('--scroll-shift',`${Math.max(-7,Math.min(7,-center*.008+(index%2?2:-2)))}px`);win.style.setProperty('--scroll-tilt',`${Math.max(-.35,Math.min(.35,-center*.0004))}deg`)}})}
+  dock?.classList.toggle('is-scrolled',y>48);
+}
+window.addEventListener('scroll',()=>{if(!scrollFrame)scrollFrame=requestAnimationFrame(updateScene)},{passive:true});window.addEventListener('resize',updateScene);updateScene();
