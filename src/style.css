@@ -338,3 +338,25 @@ html { scroll-padding-block: calc(64px + var(--safe-top)) calc(96px + var(--safe
     color: #252525;
   }
 }
+
+/* The original desktop cadence is 12px dots on 19px centers. */
+.traffic-lights .traffic { width: 19px; }
+.traffic-lights .traffic::before { width: 12px; height: 12px; }
+.window-titlebar { padding-inline: 10px 12px; }
+#menu-clock { white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (min-width: 901px) {
+  .window-area:has(.app-window.maximized) { perspective: none; }
+  .app-window.maximized {
+    inset: calc(49px + var(--safe-top)) 0 calc(86px + var(--safe-bottom)) !important;
+    transform: none;
+  }
+  .photos-window.maximized .photo-window-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    padding: 20px;
+  }
+  .project-detail-window.maximized .detail-image { height: clamp(205px, 42vh, 520px); }
+}
+@media (max-width: 900px) {
+  .traffic-lights .maximize-window { display: none; }
+}

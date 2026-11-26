@@ -39,7 +39,32 @@ projectList.addEventListener('click',event=>{const row=event.target.closest('[da
 document.querySelectorAll('.dock-app[data-open]').forEach(button=>button.addEventListener('click',()=>{const name=button.dataset.open;const win=document.querySelector(`[data-window="${name}"]`);if(win&&!win.hidden&&win.classList.contains('minimized')){win.classList.remove('minimized');win.style.display='';focusWindow(win);return}openWindow(name);button.classList.add('is-open')}));
 document.querySelectorAll('.close-window').forEach(button=>button.addEventListener('click',()=>closeWindow(button.closest('.app-window'))));
 document.querySelectorAll('.minimize-window').forEach(button=>button.addEventListener('click',()=>{const win=button.closest('.app-window');win.classList.add('minimized');setTimeout(()=>{if(win.classList.contains('minimized'))win.style.display='none'},220)}));
-document.querySelectorAll('.maximize-window').forEach(button=>button.addEventListener('click',()=>{const win=button.closest('.app-window');win.classList.toggle('maximized');focusWindow(win)}));
+const maximizeButtons = document.querySelectorAll('.maximize-window');
+function restoreWindow(button) {
+  button.closest('.app-window').classList.remove('maximized');
+  button.setAttribute('aria-label', 'Expand window');
+}
+for (const button of maximizeButtons) {
+  restoreWindow(button);
+  button.addEventListener('click', () => {
+    if (stacked.matches) return;
+    const win = button.closest('.app-window');
+    const wasExpanded = win.classList.contains('maximized');
+    maximizeButtons.forEach(restoreWindow);
+    if (!wasExpanded) {
+      win.classList.add('maximized');
+      button.setAttribute('aria-label', 'Restore window size');
+    }
+    focusWindow(win);
+  });
+}
+stacked.addEventListener('change', () => maximizeButtons.forEach(restoreWindow));
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !document.querySelector('dialog[open]') &&
+      document.querySelector('#menubar-dropdown').hidden) {
+    maximizeButtons.forEach(restoreWindow);
+  }
+});
 document.querySelectorAll('.app-window').forEach(win=>win.addEventListener('pointerdown',()=>focusWindow(win)));
 
 // Desktop window dragging and resizing; touch devices retain a readable stacked workspace.
@@ -182,7 +207,14 @@ function resetTyping() {
 reducedMotion.addEventListener('change', resetTyping);
 resetTyping();
 
-function updateClock(){const now=new Date();document.querySelector('#menu-clock').textContent=new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit'}).format(now)}updateClock();setInterval(updateClock,30000);
+const arizonaClock = new Intl.DateTimeFormat('en-US', {
+  hour: 'numeric', minute: '2-digit', timeZone: 'America/Phoenix',
+});
+function updateClock() {
+  document.querySelector('#menu-clock').textContent = `${arizonaClock.format(new Date())} MST`;
+}
+updateClock();
+setInterval(updateClock, 30000);
 
 // Reveal the desktop windows as scroll brings them into view; subtle scene depth on larger screens.
 if (!reducedMotion.matches && 'IntersectionObserver' in window) {
