@@ -367,7 +367,7 @@ html { scroll-padding-block: calc(64px + var(--safe-top)) calc(96px + var(--safe
   border-top: 1px solid #3e4046;
 }
 .menubar.liquidGlass, .dock.liquidGlass, .dock.liquidGlass.is-scrolled {
-  border-color: transparent;
+  border-color: #ffffff40;
   box-shadow: 0 8px 24px #0004;
 }
 .menubar.liquidGlass { box-shadow: none; }
