@@ -82,13 +82,19 @@ function updateClock(){const now=new Date();document.querySelector('#menu-clock'
 
 // Reveal the desktop windows as scroll brings them into view; subtle scene depth on larger screens.
 if (!reducedMotion.matches && 'IntersectionObserver' in window) {
-const windowObserver=new IntersectionObserver(entries=>{
-  for(const entry of entries){
-    if(entry.isIntersecting)entry.target.classList.add('in-view');
-    else if(entry.boundingClientRect.top>innerHeight)entry.target.classList.remove('in-view');
+const revealObserver = new IntersectionObserver((entries, observer) => {
+  for (const entry of entries) {
+    if (!entry.isIntersecting) continue;
+    entry.target.classList.add('is-revealed');
+    observer.unobserve(entry.target);
   }
-},{threshold:.08,rootMargin:'0px 0px -5% 0px'});
-document.querySelectorAll('.app-window').forEach((win,index)=>{win.classList.add('window-reveal');win.style.setProperty('--enter-delay',`${index*90}ms`);windowObserver.observe(win)});
+}, { threshold: 0.08 });
+
+document.querySelectorAll('.app-window:not(.project-detail-window) .window-content, .desktop-photo-card').forEach(content => {
+  if (content.getBoundingClientRect().top < innerHeight - 64) return;
+  content.classList.add('scroll-reveal');
+  revealObserver.observe(content);
+});
 const dock=document.querySelector('.dock');
 let scrollFrame=0;
 function updateScene(){
