@@ -413,3 +413,17 @@ html.workspace-scroll-locked body { overflow: hidden; }
   background: #23252a;
 }
 .workspace-scroll-locked .menubar.liquidGlass::before { display: none; }
+
+.menubar .menu-left { gap: 4px; min-width: 0; }
+.menubar .menu-left button { display: block; flex: none; padding-inline: 8px; }
+.menubar .menu-left button[hidden] { display: none; }
+.menubar .menu-right { flex: none; }
+.menu-left button[data-action]:focus::before {
+  content: "";
+  position: absolute;
+  inset: 9px 0;
+  z-index: -1;
+  border-radius: 999px;
+  background: #ffffff21;
+}
+.menu-left button[data-action] { position: relative; isolation: isolate; white-space: nowrap; }

@@ -145,7 +145,9 @@ document.querySelectorAll('.app-window').forEach(win=>win.addEventListener('poin
 }
 
 const menu = document.querySelector('#menubar-dropdown');
-const menuButtons = document.querySelectorAll('[data-menu]');
+const menuBar = document.querySelector('.menubar');
+const nameButton = menuBar.querySelector('.menu-name');
+const trailingButtons = [...menuBar.querySelectorAll('.menu-left button')].filter(button => button !== nameButton);
 let activeMenuButton;
 
 function closeMenu() {
@@ -155,13 +157,38 @@ function closeMenu() {
 }
 
 const menuOptions = {
-  portfolio: [['Open Projects', 'projects'], ['Open Photography', 'photos'], ['About Me', 'about'], ['Contact', 'contact'], ['Appearance…', 'appearance']],
   work: [['All projects', 'projects'], ...projects.map((project, index) => [project.title, `project-${index}`])],
   view: [['Show all windows', 'all'], ['Close all windows', 'close']],
   help: [['Use the Dock to browse', 'noop']],
 };
 
-for (const button of menuButtons) {
+function renderMenu(options) {
+  menu.innerHTML = options.map(([label, value]) =>
+    `<button data-menu-action="${value}">${safe(label)}</button>`).join('');
+  menu.hidden = false;
+  const left = activeMenuButton.getBoundingClientRect().left;
+  menu.style.left = `${Math.max(8, Math.min(left, innerWidth - menu.offsetWidth - 8))}px`;
+  menu.querySelector('button').focus();
+}
+
+function nameMenuOptions() {
+  return [
+    ...trailingButtons.filter(button => button.hidden).map(button => [
+      button.textContent.trim(),
+      button.dataset.action || `submenu-${button.dataset.menu}`,
+    ]),
+    ['Back to desktop', 'home'],
+  ];
+}
+
+for (const button of [nameButton, ...trailingButtons]) {
+  if (button.dataset.action) {
+    button.addEventListener('click', () => {
+      closeMenu();
+      runMenuAction(button.dataset.action);
+    });
+    continue;
+  }
   button.setAttribute('aria-controls', menu.id);
   button.setAttribute('aria-expanded', 'false');
   button.addEventListener('click', () => {
@@ -170,14 +197,28 @@ for (const button of menuButtons) {
     if (wasOpen) return;
     activeMenuButton = button;
     button.setAttribute('aria-expanded', 'true');
-    menu.innerHTML = menuOptions[button.dataset.menu].map(([label, value]) =>
-      `<button data-menu-action="${value}">${safe(label)}</button>`).join('');
-    menu.hidden = false;
-    const left = button.getBoundingClientRect().left;
-    menu.style.left = `${Math.max(8, Math.min(left, innerWidth - menu.offsetWidth - 8))}px`;
-    menu.querySelector('button').focus();
+    renderMenu(button === nameButton ? nameMenuOptions() : menuOptions[button.dataset.menu]);
   });
 }
+
+function layoutMenuBar() {
+  const styles = getComputedStyle(menuBar);
+  const gap = parseFloat(getComputedStyle(nameButton.parentElement).columnGap) || 0;
+  const available = menuBar.clientWidth - parseFloat(styles.paddingLeft) -
+    parseFloat(styles.paddingRight) - document.querySelector('.menu-right').offsetWidth - 24;
+  let used = nameButton.offsetWidth;
+  let overflow = menuBar.clientWidth <= 360;
+  for (const button of trailingButtons) {
+    const wasHidden = button.hidden;
+    button.hidden = false;
+    used += button.offsetWidth + gap;
+    overflow ||= used > available;
+    button.hidden = overflow;
+    if (wasHidden !== overflow && activeMenuButton) closeMenu();
+  }
+}
+layoutMenuBar();
+new ResizeObserver(layoutMenuBar).observe(menuBar);
 
 const appearance = document.querySelector('.appearance-panel');
 const accentInput = document.querySelector('#accent-color');
@@ -202,12 +243,13 @@ try { applyAccent(localStorage.getItem('portfolio-accent') || accentInput.value)
 catch { applyAccent(accentInput.value); }
 document.querySelector('#open-appearance').addEventListener('click', () => appearance.showModal());
 
-menu.addEventListener('click', event => {
-  const action = event.target.closest('[data-menu-action]')?.dataset.menuAction;
-  if (!action) return;
-  const trigger = activeMenuButton;
-  closeMenu();
-  trigger?.focus();
+function runMenuAction(action) {
+  if (action === 'home') {
+    maximizeButtons.forEach(restoreWindow);
+    syncDock();
+    window.scrollTo({ top: 0 });
+    return;
+  }
   if (action === 'appearance') appearance.showModal();
   else if (action === 'all') {
     document.querySelectorAll('.app-window:not(.project-detail-window)').forEach(win => {
@@ -218,6 +260,19 @@ menu.addEventListener('click', event => {
   } else if (action === 'close') document.querySelectorAll('.app-window').forEach(closeWindow);
   else if (action.startsWith('project-')) showProject(Number(action.slice(8)));
   else if (action !== 'noop') openWindow(action);
+}
+menu.addEventListener('click', event => {
+  const action = event.target.closest('[data-menu-action]')?.dataset.menuAction;
+  if (!action) return;
+  if (action === 'submenu-back') { renderMenu(nameMenuOptions()); return; }
+  if (action.startsWith('submenu-')) {
+    renderMenu([...menuOptions[action.slice(8)], ['Back', 'submenu-back']]);
+    return;
+  }
+  const trigger = activeMenuButton;
+  closeMenu();
+  trigger?.focus();
+  runMenuAction(action);
 });
 document.addEventListener('click', event => {
   if (!event.target.closest('.menubar')) closeMenu();
