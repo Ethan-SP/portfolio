@@ -141,3 +141,66 @@ html { scroll-padding-block: calc(64px + var(--safe-top)) calc(96px + var(--safe
   .desktop-copy, .detail-body > p:not(.profile-label),
   .about-window-content > p:not(.profile-label), .contact-window-content p { font-size: 15px; }
 }
+
+/* Graphite desktop, slate windows, amber accents. */
+:root {
+  --workspace: #151618;
+  --window-face: #29394d;
+  --window-bar: #405774;
+  --accent: #f0bb70;
+}
+.desktop { background: var(--workspace); }
+.desktop::before {
+  background: radial-gradient(ellipse at 18% 14%, #292b30 0, var(--workspace) 70%);
+}
+.app-window {
+  background: var(--window-face);
+  border-color: #637b96;
+}
+.window-content { background: var(--window-face); }
+.window-titlebar {
+  background: var(--window-bar);
+  border-bottom-color: #7e95b130;
+}
+.window-titlebar h2 { color: #f5f8fc; }
+.window-toolbar { border-color: #677e9960; color: #d2dfef; }
+.project-row:hover, .project-row:focus-visible,
+.file-icon, .profile-symbol, .mail-glyph, .skill-tags span {
+  background: var(--window-bar);
+}
+.desktop-welcome h1 .typed-wrap, .desktop-welcome h1 .cursor { color: var(--accent); }
+.dock-app.is-open::after { background: var(--accent); }
+.traffic.close-window { background: #a7bbcf; }
+.traffic.minimize-window { background: var(--accent); }
+.traffic.maximize-window { background: #cad6e3; }
+:focus-visible, .project-row:focus-visible { outline-color: var(--accent); }
+
+.menubar.liquidGlass, .dock.liquidGlass {
+  isolation: isolate;
+  text-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.menubar.liquidGlass { width: 100%; border-radius: 0; transform: none; }
+.dock.liquidGlass { transform: translateX(-50%); }
+.menubar.liquidGlass::before, .menubar.liquidGlass::after,
+.dock.liquidGlass::before, .dock.liquidGlass::after {
+  border-radius: inherit;
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .menubar.liquidGlass, .dock.liquidGlass {
+    background: #19233285;
+  }
+  .menubar.liquidGlass::before, .dock.liquidGlass::before {
+    -webkit-backdrop-filter: blur(8px) saturate(130%);
+    backdrop-filter: blur(8px) saturate(130%);
+  }
+  .menubar.liquidGlass::after, .dock.liquidGlass::after {
+    background: linear-gradient(158deg, #ffffff21, transparent 55%);
+    box-shadow: inset 0 1px #ffffff60, inset 0 -1px #ffffff18;
+  }
+}
+/* Keep the lighter blur and rim on touch devices. */
+@media (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .menubar.liquidGlass::before, .dock.liquidGlass::before { filter: none; }
+}

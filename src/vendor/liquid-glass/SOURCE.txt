@@ -1,0 +1,2 @@
+Vanilla distribution from https://github.com/Mael-667/Liquid-Glass-CSS
+Upstream commit: 9a7daef232d4c4eee63fb5bf890320832d27dcdb

@@ -1,3 +1,4 @@
+import './vendor/liquid-glass/liquidGlass.js';
 import {projects,photos} from './content.js';
 
 const projectList=document.querySelector('#project-list');
