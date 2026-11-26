@@ -36,7 +36,7 @@ function closeWindow(win){win.hidden=true;document.querySelector(`.dock-app[data
 function showProject(index){const p=projects[index];if(!p)return;detailWindow.hidden=false;detailWindow.style.display='';detailWindow.classList.remove('minimized');detailContent.innerHTML=`<img class="detail-image" decoding="async" ${imageSources(p.image, '(max-width: 900px) 95vw, 520px')} src="${safe(p.image)}" alt="${safe(p.alt)}"><div class="detail-body"><p class="profile-label">${safe(p.type)} · ${safe(p.year)}</p><h3>${safe(p.title)}</h3><p>${safe(p.description)}</p>${p.url?`<a class="mail-button" href="${safe(p.url)}" target="_blank" rel="noopener noreferrer">View project <span>↗</span></a>`:''}</div>`;openWindow('detail')}
 
 projectList.addEventListener('click',event=>{const row=event.target.closest('[data-project]');if(row)showProject(Number(row.dataset.project))});
-document.querySelectorAll('.dock-app').forEach(button=>button.addEventListener('click',()=>{const name=button.dataset.open;const win=document.querySelector(`[data-window="${name}"]`);if(win&&!win.hidden&&win.classList.contains('minimized')){win.classList.remove('minimized');win.style.display='';focusWindow(win);return}openWindow(name);button.classList.add('is-open')}));
+document.querySelectorAll('.dock-app[data-open]').forEach(button=>button.addEventListener('click',()=>{const name=button.dataset.open;const win=document.querySelector(`[data-window="${name}"]`);if(win&&!win.hidden&&win.classList.contains('minimized')){win.classList.remove('minimized');win.style.display='';focusWindow(win);return}openWindow(name);button.classList.add('is-open')}));
 document.querySelectorAll('.close-window').forEach(button=>button.addEventListener('click',()=>closeWindow(button.closest('.app-window'))));
 document.querySelectorAll('.minimize-window').forEach(button=>button.addEventListener('click',()=>{const win=button.closest('.app-window');win.classList.add('minimized');setTimeout(()=>{if(win.classList.contains('minimized'))win.style.display='none'},220)}));
 document.querySelectorAll('.maximize-window').forEach(button=>button.addEventListener('click',()=>{const win=button.closest('.app-window');win.classList.toggle('maximized');focusWindow(win)}));
@@ -61,14 +61,90 @@ document.querySelectorAll('.app-window').forEach(win=>win.addEventListener('poin
   }));
 }
 
-document.querySelectorAll('.menu-name,.menu-left [data-menu]').forEach(button=>button.addEventListener('click',()=>{
-  const menu=document.querySelector('#menubar-dropdown');const selected=button.dataset.menu;
-  if(!menu.hidden&&menu.dataset.active===selected){menu.hidden=true;return}
-  const options=selected==='portfolio'?[['Open Projects','projects'],['Open Photography','photos'],['About Me','about'],['Contact','contact']]:selected==='work'?[['All projects','projects'],...projects.map((project,index)=>[project.title,`project-${index}`])]:selected==='view'?[['Show all windows','all'],['Close all windows','close']]:[['Use the Dock to browse','noop']];
-  menu.dataset.active=selected;menu.innerHTML=options.map(([label,value])=>`<button data-menu-action="${value}">${safe(label)}</button>`).join('');menu.hidden=false;
-}));
-document.querySelector('#menubar-dropdown').addEventListener('click',event=>{const action=event.target.closest('[data-menu-action]')?.dataset.menuAction;if(!action)return;if(action==='all')document.querySelectorAll('.app-window').forEach(win=>{win.hidden=false;win.style.display='';win.classList.remove('minimized')});else if(action==='close')document.querySelectorAll('.app-window').forEach(closeWindow);else if(action.startsWith('project-'))showProject(Number(action.slice(8)));else if(action!=='noop')openWindow(action);document.querySelector('#menubar-dropdown').hidden=true});
-document.addEventListener('click',event=>{if(!event.target.closest('.menubar'))document.querySelector('#menubar-dropdown').hidden=true});
+const menu = document.querySelector('#menubar-dropdown');
+const menuButtons = document.querySelectorAll('[data-menu]');
+let activeMenuButton;
+
+function closeMenu() {
+  menu.hidden = true;
+  activeMenuButton?.setAttribute('aria-expanded', 'false');
+  activeMenuButton = undefined;
+}
+
+const menuOptions = {
+  portfolio: [['Open Projects', 'projects'], ['Open Photography', 'photos'], ['About Me', 'about'], ['Contact', 'contact'], ['Appearance…', 'appearance']],
+  work: [['All projects', 'projects'], ...projects.map((project, index) => [project.title, `project-${index}`])],
+  view: [['Show all windows', 'all'], ['Close all windows', 'close']],
+  help: [['Use the Dock to browse', 'noop']],
+};
+
+for (const button of menuButtons) {
+  button.setAttribute('aria-controls', menu.id);
+  button.setAttribute('aria-expanded', 'false');
+  button.addEventListener('click', () => {
+    const wasOpen = activeMenuButton === button;
+    closeMenu();
+    if (wasOpen) return;
+    activeMenuButton = button;
+    button.setAttribute('aria-expanded', 'true');
+    menu.innerHTML = menuOptions[button.dataset.menu].map(([label, value]) =>
+      `<button data-menu-action="${value}">${safe(label)}</button>`).join('');
+    menu.hidden = false;
+    const left = button.getBoundingClientRect().left;
+    menu.style.left = `${Math.max(8, Math.min(left, innerWidth - menu.offsetWidth - 8))}px`;
+    menu.querySelector('button').focus();
+  });
+}
+
+const appearance = document.querySelector('.appearance-panel');
+const accentInput = document.querySelector('#accent-color');
+const presets = [...document.querySelectorAll('[data-accent]')];
+
+function applyAccent(color) {
+  if (!/^#[0-9a-f]{6}$/i.test(color)) return;
+  document.documentElement.style.setProperty('--portfolio-accent', color);
+  accentInput.value = color;
+  for (const button of presets) {
+    button.setAttribute('aria-pressed', String(button.dataset.accent === color));
+  }
+  try { localStorage.setItem('portfolio-accent', color); } catch { /* Storage can be disabled. */ }
+}
+
+for (const button of presets) {
+  button.style.setProperty('--swatch', button.dataset.accent);
+  button.addEventListener('click', () => applyAccent(button.dataset.accent));
+}
+accentInput.addEventListener('input', () => applyAccent(accentInput.value));
+try { applyAccent(localStorage.getItem('portfolio-accent') || accentInput.value); }
+catch { applyAccent(accentInput.value); }
+document.querySelector('#open-appearance').addEventListener('click', () => appearance.showModal());
+
+menu.addEventListener('click', event => {
+  const action = event.target.closest('[data-menu-action]')?.dataset.menuAction;
+  if (!action) return;
+  const trigger = activeMenuButton;
+  closeMenu();
+  trigger?.focus();
+  if (action === 'appearance') appearance.showModal();
+  else if (action === 'all') {
+    document.querySelectorAll('.app-window:not(.project-detail-window)').forEach(win => {
+      win.hidden = false;
+      win.style.display = '';
+      win.classList.remove('minimized');
+    });
+  } else if (action === 'close') document.querySelectorAll('.app-window').forEach(closeWindow);
+  else if (action.startsWith('project-')) showProject(Number(action.slice(8)));
+  else if (action !== 'noop') openWindow(action);
+});
+document.addEventListener('click', event => {
+  if (!event.target.closest('.menubar')) closeMenu();
+});
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape' || menu.hidden) return;
+  const trigger = activeMenuButton;
+  closeMenu();
+  trigger?.focus();
+});
 
 const words = ['circuits', 'code', 'curiosity', 'ideas'];
 const typedWord = document.querySelector('#typed-word');

@@ -13,7 +13,7 @@
 <body class="desktop-body">
   <div class="desktop" id="home">
     <header class="menubar liquidGlass blur-8">
-      <div class="menu-left"><a href="#home" class="apple-mark" aria-label="Home">◉</a><button class="menu-name" data-menu="portfolio">Alex Morgan</button><button data-menu="work">Work</button><button data-menu="view">View</button><button data-menu="help">Help</button></div>
+      <div class="menu-left"><a href="#home" class="apple-mark" aria-label="Home">◉</a><button class="menu-name" data-menu="portfolio">Alex Morgan</button><button data-menu="work">Work<span class="menu-chevron" aria-hidden="true"></span></button><button data-menu="view">View</button><button data-menu="help">Help</button></div>
       <div class="menu-right"><span class="menu-status">EE / PHOTOGRAPHY</span><span id="menu-clock">9:41 AM</span></div>
       <div class="menubar-dropdown" id="menubar-dropdown" hidden></div>
     </header>
@@ -57,9 +57,27 @@
         <button class="dock-app" data-open="about" aria-label="Open About Me"><span class="dock-icon icon-about">AM</span><span class="dock-tooltip">About Me</span></button>
         <button class="dock-app" data-open="photos" aria-label="Open Photography"><span class="dock-icon icon-photos">▧</span><span class="dock-tooltip">Photography</span></button>
         <button class="dock-app" data-open="contact" aria-label="Open Contact"><span class="dock-icon icon-contact">↗</span><span class="dock-tooltip">Contact</span></button>
+        <button class="dock-app" id="open-appearance" aria-label="Open Appearance settings"><span class="dock-icon" aria-hidden="true">⚙</span><span class="dock-tooltip">Settings</span></button>
       </nav>
       <div class="desktop-footer"><span>© 2026 ALEX MORGAN</span><span>MADE WITH CURIOSITY <span class="footer-cursor">_</span></span></div>
     </main>
   </div>
+  <dialog class="appearance-panel" aria-labelledby="appearance-title">
+    <header><span>Settings</span><form method="dialog"><button aria-label="Close Appearance settings">×</button></form></header>
+    <section>
+      <h2 id="appearance-title">Appearance</h2>
+      <div class="appearance-row"><label for="accent-color">Accent color</label><input id="accent-color" type="color" value="#a1a5ac"></div>
+      <div class="accent-presets" role="group" aria-label="Accent presets">
+        <button type="button" data-accent="#a1a5ac" aria-label="Graphite"></button>
+        <button type="button" data-accent="#70aaff" aria-label="Blue"></button>
+        <button type="button" data-accent="#ad92ff" aria-label="Purple"></button>
+        <button type="button" data-accent="#f38bbb" aria-label="Pink"></button>
+        <button type="button" data-accent="#ff827c" aria-label="Red"></button>
+        <button type="button" data-accent="#efad64" aria-label="Orange"></button>
+        <button type="button" data-accent="#ebd16e" aria-label="Yellow"></button>
+        <button type="button" data-accent="#85cb99" aria-label="Green"></button>
+      </div>
+    </section>
+  </dialog>
 </body>
 </html>
