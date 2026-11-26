@@ -219,3 +219,38 @@ html { scroll-padding-block: calc(64px + var(--safe-top)) calc(96px + var(--safe
   }
   .app-window.maximized .window-content { height: calc(100% - 48px); }
 }
+
+/* Original desktop cluster: 12px dots separated by 7px. */
+@media (min-width: 901px) {
+  .traffic-lights { gap: 7px; }
+  .traffic { width: 12px; height: 12px; }
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.desktop-welcome h1 .typed-wrap {
+  display: inline-grid;
+  vertical-align: baseline;
+}
+.typed-wrap::before, .typed-text { grid-area: 1 / 1; }
+.typed-wrap::before {
+  content: "curiosity";
+  visibility: hidden;
+  padding-right: .16em;
+}
+.desktop-welcome h1 .typed-text { font-size: inherit; }
+.desktop-welcome h1 .cursor {
+  width: .035em;
+  height: .82em;
+  margin-left: .08em;
+  vertical-align: -.04em;
+  background: currentColor;
+}
+@media (prefers-reduced-motion: reduce) {
+  .desktop-welcome h1 .cursor { display: none; }
+}

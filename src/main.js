@@ -70,14 +70,42 @@ document.querySelectorAll('.menu-name,.menu-left [data-menu]').forEach(button=>b
 document.querySelector('#menubar-dropdown').addEventListener('click',event=>{const action=event.target.closest('[data-menu-action]')?.dataset.menuAction;if(!action)return;if(action==='all')document.querySelectorAll('.app-window').forEach(win=>{win.hidden=false;win.style.display='';win.classList.remove('minimized')});else if(action==='close')document.querySelectorAll('.app-window').forEach(closeWindow);else if(action.startsWith('project-'))showProject(Number(action.slice(8)));else if(action!=='noop')openWindow(action);document.querySelector('#menubar-dropdown').hidden=true});
 document.addEventListener('click',event=>{if(!event.target.closest('.menubar'))document.querySelector('#menubar-dropdown').hidden=true});
 
-const words=['circuits','code','curiosity','ideas'];
-const target=document.querySelector('#typed-word');let wordIndex=0;
-if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
-  setInterval(()=>{
-    target.classList.add('changing');
-    window.setTimeout(()=>{wordIndex=(wordIndex+1)%words.length;target.textContent=words[wordIndex];target.classList.remove('changing')},280);
-  },3200);
+const words = ['circuits', 'code', 'curiosity', 'ideas'];
+const typedWord = document.querySelector('#typed-word');
+let wordIndex = 0;
+let characterCount = words[0].length;
+let deleting = true;
+let typingTimer;
+
+function typeNextCharacter() {
+  if (reducedMotion.matches) return;
+  const word = words[wordIndex];
+  characterCount += deleting ? -1 : 1;
+  typedWord.textContent = word.slice(0, characterCount);
+
+  let delay = deleting ? 45 : 85;
+  if (characterCount === 0) {
+    wordIndex = (wordIndex + 1) % words.length;
+    deleting = false;
+    delay = 240;
+  } else if (characterCount === word.length) {
+    deleting = true;
+    delay = 1800;
+  }
+  typingTimer = window.setTimeout(typeNextCharacter, delay);
 }
+
+function resetTyping() {
+  window.clearTimeout(typingTimer);
+  wordIndex = 0;
+  characterCount = words[0].length;
+  deleting = true;
+  typedWord.textContent = words[0];
+  if (!reducedMotion.matches) typingTimer = window.setTimeout(typeNextCharacter, 1800);
+}
+reducedMotion.addEventListener('change', resetTyping);
+resetTyping();
+
 function updateClock(){const now=new Date();document.querySelector('#menu-clock').textContent=new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit'}).format(now)}updateClock();setInterval(updateClock,30000);
 
 // Reveal the desktop windows as scroll brings them into view; subtle scene depth on larger screens.
